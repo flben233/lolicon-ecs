@@ -78,7 +78,7 @@ check_and_cat_file() {
     local file="$1"
     if [[ -f "$file" ]]; then
         if [[ -s "$file" ]] && [[ "$(grep -vE '^\s*$' "$file")" ]]; then
-            if ! grep -q "error" "$file"; then
+            if grep -vE '^\s*$' "$file" | grep -qvi "error"; then
                 cat "$file"
             fi
         fi

@@ -624,8 +624,8 @@ check_and_cat_file() {
     else
         return
     fi
-    # 检测文件内容是否包含"error"，如果包含则不打印文件内容
-    if grep -q "error" "$file"; then
+    # 检测文件内容是否均为错误信息，均为错误信息则不打印文件内容
+    if ! grep -vE '^\s*$' "$file" | grep -qvi "error"; then
         return
     fi
     cat "$file"
@@ -3628,7 +3628,7 @@ email_check() {
     else
         return
     fi
-    "${TEMP_DIR}/pck" | sed '1d' >>"$IP_QUALITY_EMAIL_FILE"
+    "${TEMP_DIR}/pck" -json >"$IP_QUALITY_EMAIL_FILE"
 }
 
 ipcheck() {
@@ -4052,6 +4052,23 @@ spiritlhl_script() {
         _yellow "数据仅作参考，不代表100%准确，如果和实际情况不一致请手动查询多个数据库比对"
     fi
     ipcheck
+}
+
+ipcheck_script() {
+    if [ "$(uname -s)" != "Linux" ]; then
+        run_remote_bash_path "https://cdn.spiritlhl.net/https://raw.githubusercontent.com/spiritLHLS/ecs/main/ipcheck.sh"
+        return
+    fi
+    check_cdn_file
+    _yellow "Concurrently downloading files..."
+    dfiles=(securityCheck portchecker)
+    start_downloads "${dfiles[@]}" || return 1
+    _yellow "All files download successfully."
+    clear
+    print_intro
+    start_time=$(date +%s)
+    spiritlhl_script
+    end_script
 }
 
 backtrace_script() {
@@ -4534,7 +4551,7 @@ port_script() {
     cd $myvar >/dev/null 2>&1
     if [ -f "${TEMP_DIR}/pck" ]; then
         chmod 700 "${TEMP_DIR}/pck"
-        ${TEMP_DIR}/pck | sed '1d'
+        "${TEMP_DIR}/pck" -json
     else
         if [ "$en_status" = true ]; then
             echo "Port checker tool not found"
@@ -4650,6 +4667,7 @@ error_exit() {
 
 build_text() {
     cd "$myvar" >/dev/null 2>&1
+    [ -f test_result.txt ] || return
     if { [ -n "${menu_mode}" ] && [ "${menu_mode}" = false ]; } ||
         { [ -n "${StartInput}" ] && { [ "${StartInput}" -eq 1 ] || [ "${StartInput}" -eq 2 ]; }; } ||
         { [ -n "${StartInput1}" ] && [ "${StartInput1}" -ge 1 ] && [ "${StartInput1}" -le 4 ]; }; then
@@ -5218,7 +5236,7 @@ single_item_script_options() {
         break_status=true
         ;;
     4)
-        run_remote_bash_path "https://cdn.spiritlhl.net/https://raw.githubusercontent.com/spiritLHLS/ecs/main/ipcheck.sh"
+        ipcheck_script
         break_status=true
         ;;
     5)
@@ -5289,7 +5307,7 @@ single_item_script() {
 my_original_script_options() {
     case $StartInput4 in
     1)
-        run_remote_bash_path "https://cdn.spiritlhl.net/https://raw.githubusercontent.com/spiritLHLS/ecs/main/ipcheck.sh"
+        ipcheck_script
         break_status=true
         ;;
     2)
