@@ -3647,7 +3647,10 @@ ipcheck() {
     else
         echo -e "------------邮件端口检测--基于oneclickvirt/portchecker开源------------"
     fi
-    check_and_cat_file "$IP_QUALITY_EMAIL_FILE"
+    # JSON 结果中的 error 字段属于检测数据，不能按文本错误过滤
+    if [ -s "$IP_QUALITY_EMAIL_FILE" ] && grep -q '"schema_version"' "$IP_QUALITY_EMAIL_FILE"; then
+        cat "$IP_QUALITY_EMAIL_FILE"
+    fi
     rm -f "$IP_QUALITY_SECURITY_FILE" "$IP_QUALITY_GOOGLE_FILE" "$IP_QUALITY_EMAIL_FILE"
 }
 
